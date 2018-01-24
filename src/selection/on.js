@@ -45,7 +45,7 @@ function onRemove(typename) {
     if (!on) return;
     for (var j = 0, i = -1, m = on.length, o; j < m; ++j) {
       if (o = on[j], (!typename.type || o.type === typename.type) && o.name === typename.name) {
-        this.removeEventListener(o.type, o.listener, o.capture);
+        removeEventListener(this, o.type, o.listener, o.capture);
       } else {
         on[++i] = o;
       }
@@ -61,17 +61,34 @@ function onAdd(typename, value, capture) {
     var on = this.__on, o, listener = wrap(value, i, group);
     if (on) for (var j = 0, m = on.length; j < m; ++j) {
       if ((o = on[j]).type === typename.type && o.name === typename.name) {
-        this.removeEventListener(o.type, o.listener, o.capture);
-        this.addEventListener(o.type, o.listener = listener, o.capture = capture);
+        removeEventListener(this,o.type, o.listener, o.capture);
+        addEventListener(this, o.type, o.listener = listener, o.capture = capture);
         o.value = value;
         return;
       }
     }
-    this.addEventListener(typename.type, listener, capture);
+    addEventListener(this, typename.type, listener, capture);
     o = {type: typename.type, name: typename.name, value: value, listener: listener, capture: capture};
     if (!on) this.__on = [o];
     else on.push(o);
   };
+}
+
+// Use jquery's event listeners if it is loaded
+function addEventListener(target, type, listener, capture) {
+   if (window["$"]) {
+     $(target).on(type, listener);
+   } else {
+      target.addEventListener(type, listener, capture);
+   }
+}
+
+function removeEventListener(target, type, listener, capture) {
+   if (window["$"]) {
+     $(target).off(type, listener);
+   } else {
+     target.removeEventListener(type, listener, capture);
+   }
 }
 
 export default function(typename, value, capture) {
